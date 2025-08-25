@@ -1,0 +1,15 @@
+name: pern-chat-api
+service:
+  name: api
+  ports:
+    - port: 3000
+      protocol: http
+  env:
+    - name: NODE_ENV
+      value: production
+  resources:
+    cpu: 0.25
+    memory: 512M
+  routes:
+    - path: /
+      service: api

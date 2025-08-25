@@ -1,0 +1,629 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // or "mysql", "sqlite", etc.
+  url      = env("DATABASE_URL_LOCAL")
+}
+
+model Region {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  title       String? // For display purposes
+  slug        String? @unique // URL-friendly version of name
+  description String?
+  code        String? @unique // e.g., "EUR" for Europe, "ASIA" for Asia
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Featured Image
+  imageUrl   String?
+  imageAlt   String?
+  imageTitle String?
+
+  // Site Map settings
+  sitemapChangefreq String? @default("monthly") // monthly, weekly, daily, etc.
+  sitemapPriority   Float?  @default(0.5) // 0.0 to 1.0
+
+  // Visibility & Status
+  isActive      Boolean @default(true)
+  hideInHome    Boolean @default(false)
+  hideInSitemap Boolean @default(false)
+  hideInMenu    Boolean @default(false)
+  hideInSubMenu Boolean @default(false)
+
+  // Sorting
+  sortOrder Int? @default(0)
+
+  // Icon
+  iconUrl String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  destinations Destination[]
+  tours        Tour[]
+
+  @@map("regions")
+}
+
+model Destination {
+  id               String  @id @default(cuid())
+  name             String
+  title            String? // Display title (different from name)
+  destinationTitle String? // Specific destination title
+  slug             String? @unique // URL-friendly identifier
+  description      String?
+  body             String? // Rich text content body
+  country          String
+  city             String?
+  coordinates      String? // Store as "lat,lng" format
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Featured Image
+  imageUrl   String?
+  imageAlt   String?
+  imageTitle String?
+
+  // Site Map settings
+  sitemapChangefreq String? @default("monthly") // monthly, weekly, daily, etc.
+  sitemapPriority   Float?  @default(0.5) // 0.0 to 1.0
+
+  // Visibility & Status
+  isActive      Boolean @default(true)
+  hideInHome    Boolean @default(false)
+  hideInSitemap Boolean @default(false)
+  hideInMenu    Boolean @default(false)
+  hideInSubMenu Boolean @default(false)
+
+  // Sorting
+  sortOrder Int? @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Keys
+  regionId String
+
+  // Relations
+  region Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  tours  Tour[]
+  faqs   faqs[]
+
+  @@map("destinations")
+}
+
+model Tour {
+  id               String  @id @default(cuid())
+  title            String
+  description      String?
+  slug             String? @unique
+  shortDescription String?
+  duration         Int
+  maxGroupSize     Int?
+  price            Decimal @db.Decimal(10, 2)
+  currency         String  @default("USD")
+
+  // Tour details
+  includes  String[]
+  excludes  String[]
+  itinerary Json?
+  images    String[]
+
+  // Additional fields
+  tourType           String?
+  groupType          String?
+  tourCode           String?  @unique
+  tourLanguage       String?
+  airportPickup      Boolean? @default(false)
+  visaIncluded       Boolean? @default(false)
+  accommodation      String?
+  transportType      String?
+  guideIncluded      Boolean? @default(false)
+  minAge             Int?
+  maxAge             Int?
+  cancellationPolicy String?
+
+  // Booking details
+  isActive      Boolean   @default(true)
+  availableFrom DateTime?
+  availableTo   DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Keys
+  regionId      String
+  destinationId String
+  hotelId       String?
+
+  // Relations
+  region      Region      @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  destination Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  hotel       Hotel?      @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  // ✅ Required opposite relation field for many-to-many with blog
+  // This field exists but you typically won't use it in your application logic
+  relatedBlogs blog[] @relation("BlogRelatedTours")
+
+  // ✅ Required opposite relation field for many-to-many with wikis
+  // This field exists but you typically won't use it in your application logic
+  relatedWikis wikis[] @relation("WikiRelatedTours")
+
+  // ✅ New relations for accommodations and detailed tour content
+  accommodations  Accommodation[]   @relation("TourAccommodations")
+  itineraries     Itinerary[]
+  galleries       Gallery[]
+  tripInformation TripInformation[]
+
+  @@map("tours")
+}
+
+model Booking {
+  id            String @id @default(cuid())
+  bookingNumber String @unique
+
+  // Customer details
+  customerName  String
+  customerEmail String
+  customerPhone String?
+
+  // Booking details
+  numberOfPeople Int
+  totalAmount    Decimal  @db.Decimal(10, 2)
+  currency       String   @default("USD")
+  bookingDate    DateTime @default(now())
+  travelDate     DateTime
+
+  // Status
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+
+  // Special requests & Notes
+  specialRequests String?
+  notes           String?
+
+  // Foreign Keys
+  tourId String?
+  tour   Tour?   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  // NEW: Custom trip details
+  adults           Int?
+  children         Int?
+  ageOfChildren    String? // Store as comma-separated string or JSON (e.g. '["3","3","3"]')
+  arrivalDate      DateTime?
+  departureDate    DateTime?
+  departureAirport String?
+  nationality      String?
+  flightIncluded   Boolean?
+
+  // NEW: Source & marketing info
+  requestSource String? // e.g. "desktop"
+  httpReferer   String?
+  urlGoal       String?
+  utmSource     String?
+  utmMedium     String?
+  utmCampaign   String?
+  utmTerm       String?
+  utmContent    String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bookings")
+}
+
+model Hotel {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  slug        String? @unique
+  link        String?
+
+  // Featured Image
+  imageUrl   String?
+  imageAlt   String?
+  imageTitle String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Keys
+  regionId      String?
+  destinationId String?
+
+  // Relations
+  tours          Tour[]          @relation
+  accommodations Accommodation[] @relation("AccommodationHotels")
+
+  @@map("hotels")
+}
+
+model blog {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String?   @unique
+  content     String?
+  imageUrl    String?
+  imageTitle  String?
+  author      String?
+  publishedAt DateTime?
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ One-sided many-to-many relation - blog can reference multiple tours
+  // The Tour model has the opposite relation field but you typically won't use it
+  relatedTours Tour[] @relation("BlogRelatedTours")
+
+  @@map("blogs")
+}
+
+model wikis {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String?   @unique
+  content     String?
+  imageUrl    String?
+  imageAlt    String?
+  imageTitle  String?
+  author      String?
+  publishedAt DateTime?
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ One-sided many-to-many relation - wikis can reference multiple tours
+  // The Tour model has the opposite relation field but you typically won't use it
+  relatedTours Tour[] @relation("WikiRelatedTours")
+
+  @@map("wikis")
+}
+
+model faqs {
+  id          String    @id @default(cuid())
+  question    String
+  answer      String
+  imageUrl    String?
+  imageAlt    String?
+  imageTitle  String?
+  author      String?
+  publishedAt DateTime?
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Keys
+  regionId      String?
+  destinationId String?
+  // Relations
+  destination   Destination? @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+
+  @@map("faqs")
+}
+
+model review {
+  id          String    @id @default(cuid())
+  name        String
+  email       String
+  rating      Int
+  comment     String?
+  imageUrl    String?
+  imageAlt    String?
+  imageTitle  String?
+  author      String?
+  publishedAt DateTime?
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model pages {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String?   @unique
+  content     String?
+  imageUrl    String?
+  imageAlt    String?
+  imageTitle  String?
+  author      String?
+  publishedAt DateTime?
+
+  // SEO & Meta fields
+  metaTitle       String?
+  metaKeywords    String?
+  metaDescription String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pages")
+}
+
+// ✅ UPDATED USER MODEL - Extended your existing User model with chat functionality
+model User {
+  id       String @id @default(cuid())
+  name     String
+  email    String @unique
+  password String // Store hashed password
+
+  // ✅ NEW CHAT FIELDS - Added from the chat schema
+  username   String? @unique // Made optional to not break existing users
+  fullName   String? // Made optional, can use existing 'name' field
+  gender     Gender? // Made optional
+  profilePic String? // Made optional, can use existing 'imageUrl'
+
+  // Role Management
+  role UserRole @default(USER)
+
+  // Profile Image (existing field, can be used instead of profilePic)
+  imageUrl String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ CHAT RELATIONS - Added from chat schema
+  // Many-to-Many relation: A user can participate in multiple conversations
+  // Array fields for Prisma's implicit many-to-many handling
+  conversationsIds String[]
+  conversations    Conversation[] // User can be in multiple conversations
+
+  // One-to-Many relation: A user can send multiple messages
+  messages Message[] // All messages sent by this user
+
+  @@map("users")
+}
+
+// ✅ NEW CHAT MODELS - Injected from your chat schema
+
+// Conversation model - Represents a chat conversation between multiple users
+model Conversation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ MANY-TO-MANY RELATION WITH USERS
+  // Array field for Prisma's implicit many-to-many relation
+  // This stores the IDs of users participating in this conversation
+  participantIds String[]
+  // This creates the actual relation - multiple users can be in multiple conversations
+  participants   User[] // All users participating in this conversation
+
+  // ✅ ONE-TO-MANY RELATION WITH MESSAGES
+  // Array field storing message IDs (optional, Prisma can handle this automatically)
+  messageIds String[]
+  // This creates the actual relation - one conversation can have many messages
+  messages   Message[] // All messages in this conversation
+
+  @@map("conversations")
+}
+
+// Message model - Represents individual messages in conversations
+model Message {
+  id   String  @id @default(cuid())
+  // Made optional so you can send attachments without text
+  body String? @db.Text
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ✅ FOREIGN KEY TO CONVERSATION
+  // Each message belongs to exactly one conversation
+  conversationId String
+  // ✅ MANY-TO-ONE RELATION: Many messages belong to one conversation
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  // ✅ FOREIGN KEY TO USER (SENDER)
+  // Each message has exactly one sender
+  senderId    String
+  // ✅ MANY-TO-ONE RELATION: Many messages can be sent by one user
+  sender      User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  // New: a message can have many attachments
+  attachments Attachment[]
+
+  @@map("messages")
+}
+
+model Attachment {
+  id String @id @default(cuid())
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  type        AttachmentType
+  url         String // e.g., Cloudinary/S3 URL
+  mimeType    String // e.g., "image/jpeg", "video/mp4", "application/pdf"
+  fileName    String? // original filename for downloads
+  fileSize    Int? // bytes (use Int for simplicity)
+  width       Int? // for images/videos
+  height      Int? // for images/videos
+  durationSec Int? // for videos/audio
+  // Any extra fields you may parse (e.g., pdf page count, EXIF, thumbnails, waveforms…)
+  metadata    Json?
+
+  createdAt DateTime @default(now())
+}
+
+// ✅ New models for detailed tour content and accommodation management
+model Accommodation {
+  id    String  @id @default(cuid())
+  name  String
+  image String?
+
+  // Relations
+  prices AccommodationPrice[]
+  hotels Hotel[]              @relation("AccommodationHotels")
+  tours  Tour[]               @relation("TourAccommodations")
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accommodations")
+}
+
+model AccommodationPrice {
+  id              String                   @id @default(cuid())
+  name            String // e.g. "Winter prices from Oct to April"
+  accommodation   Accommodation            @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  accommodationId String
+  items           AccommodationPriceItem[]
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accommodation_prices")
+}
+
+model AccommodationPriceItem {
+  id         String             @id @default(cuid())
+  priceValue Decimal            @db.Decimal(10, 2)
+  body       String // e.g. "per person in double"
+  sort       Int
+  priceId    String
+  price      AccommodationPrice @relation(fields: [priceId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accommodation_price_items")
+}
+
+model Itinerary {
+  id            String  @id @default(cuid())
+  title         String
+  body          String?
+  meals         String?
+  accommodation String?
+  sort          Int
+  mediaUrl      String?
+  mediaAlt      String?
+  mediaTitle    String?
+  tourId        String
+  tour          Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("itineraries")
+}
+
+model Gallery {
+  id         String  @id @default(cuid())
+  imageUrl   String
+  imageAlt   String?
+  imageTitle String?
+  videoLink  String?
+  tourId     String
+  tour       Tour    @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("galleries")
+}
+
+model TripInformation {
+  id     String @id @default(cuid())
+  title  String
+  body   String
+  tourId String
+  tour   Tour   @relation(fields: [tourId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("trip_information")
+}
+
+// ✅ ENUMS - Updated and added new ones
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  EDITOR
+  USER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  REFUNDED
+  FAILED
+}
+
+// ✅ NEW ENUM - Added from chat schema
+enum Gender {
+  male
+  female
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  FILE
+  AUDIO
+}
