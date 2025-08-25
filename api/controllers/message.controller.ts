@@ -2,7 +2,7 @@ import prisma from "../db/prisma";
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import cloudinary from "../lib/cloudinary";
-import { getReceiverSocketId, io } from "../socket/socket";
+import { io } from "../socket/socket";
 
 export const getUsersForSidebar = async (req: Request, res: Response) => {
   try {
@@ -147,12 +147,8 @@ export const sendMessage = async (req: Request, res: Response) => {
     }
 
     // Socket io will go here
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    console.log("receiverSocketId", receiverSocketId);
-
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", newMessage);
-    }
+    io.to(receiverId).emit("newMessage", newMessage);
+    console.log(`Emitted 'newMessage' to room: ${receiverId}`);
 
     res.status(201).json(newMessage);
   } catch (error: any) {
