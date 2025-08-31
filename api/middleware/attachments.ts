@@ -174,6 +174,8 @@ const attachmentFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
     "audio/m4a",
     "audio/wma",
     "audio/mpeg",
+    "audio/webm",
+    "audio/webm;codecs=opus",
   ];
   const fileTypes = [
     "application/pdf",

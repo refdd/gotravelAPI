@@ -123,9 +123,7 @@ export const sendMessage = async (req: Request, res: Response) => {
         sender: {
           select: {
             id: true,
-            username: true,
-            fullName: true,
-            profilePic: true,
+            name: true,
           },
         },
       },
@@ -148,7 +146,6 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     // Socket io will go here
     io.to(receiverId).emit("newMessage", newMessage);
-    console.log(`Emitted 'newMessage' to room: ${receiverId}`);
 
     res.status(201).json(newMessage);
   } catch (error: any) {

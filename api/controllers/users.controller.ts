@@ -2,6 +2,7 @@ import prisma from "../db/prisma";
 import { Prisma } from "@prisma/client";
 import { Request, Response } from "express";
 import cloudinary from "../lib/cloudinary";
+import { deleteStreamUser } from "../lib/stream";
 
 export const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -62,6 +63,7 @@ export const deleteUser = async (req: Request, res: Response) => {
     await prisma.user.delete({
       where: { id },
     });
+    deleteStreamUser(id);
     res.status(200).json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);

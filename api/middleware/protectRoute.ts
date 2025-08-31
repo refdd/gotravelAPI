@@ -12,6 +12,10 @@ declare global {
     export interface Request {
       user: {
         id: string;
+        name: string;
+        email: string;
+        imageUrl: string;
+        role: string;
       };
     }
   }
@@ -46,7 +50,13 @@ const protectRoute = async (
       return;
     }
 
-    req.user = user;
+    req.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      imageUrl: user.profilePic || "",
+      role: user.role,
+    };
 
     next();
   } catch (error: any) {
