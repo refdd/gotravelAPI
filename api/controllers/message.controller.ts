@@ -17,6 +17,7 @@ export const getUsersForSidebar = async (req: Request, res: Response) => {
         id: true,
         name: true,
         imageUrl: true,
+        role: true,
       },
     });
     res.status(200).json(users);

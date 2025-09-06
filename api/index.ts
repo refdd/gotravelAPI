@@ -18,6 +18,7 @@ import bookingsRoutes from "./routes/bookings.route";
 import reviewsRoutes from "./routes/reviews.route";
 import analyticsRoutes from "./routes/analytics.route";
 import messageRoutes from "./routes/message.route";
+import geminiRoutes from "./routes/gemini.route";
 
 dotenv.config();
 
@@ -52,6 +53,7 @@ app.use("/bookings", bookingsRoutes); // done
 app.use("/reviews", reviewsRoutes); //done
 app.use("/analytics", analyticsRoutes); //done
 app.use("/messages", messageRoutes);
+app.use("/ai", geminiRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "API is working" });
