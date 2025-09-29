@@ -10,8 +10,11 @@ const generateToken = (userId: string, res: Response) => {
   res.cookie("jwt", token, {
     maxAge: 1000 * 60 * 60 * 24, // 1 day
     httpOnly: true, // prevent XSS cross site scripting
-    sameSite: "strict", // CSRF attack cross-site request forgery
-    domain: isProduction ? "pern-chat.vercel.app" : undefined,
+    sameSite: isProduction ? "none" : "strict", // CSRF attack cross-site request forgery
+    domain:
+      isProduction && process.env.FRONTEND_DOMAIN
+        ? process.env.FRONTEND_DOMAIN
+        : undefined,
     secure: isProduction,
   });
 

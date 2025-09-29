@@ -180,7 +180,15 @@ export const logout = async (req: Request, res: Response) => {
     }
 
     // Clear the session cookie
-    res.clearCookie("jwt");
+    const isProduction = process.env.NODE_ENV === "production";
+    res.clearCookie("jwt", {
+      domain:
+        isProduction && process.env.FRONTEND_DOMAIN
+          ? process.env.FRONTEND_DOMAIN
+          : undefined,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "strict",
+    });
     res.status(200).json({ message: "Logged out successfully" });
   } catch (error) {
     console.error("Error during logout:", error);
