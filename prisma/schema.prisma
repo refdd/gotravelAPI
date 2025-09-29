@@ -54,6 +54,8 @@ model Region {
   destinations Destination[]
   tours        Tour[]
 
+  @@index([slug])
+  @@index([isActive])
   @@map("regions")
 }
 
@@ -105,6 +107,10 @@ model Destination {
   tours  Tour[]
   faqs   faqs[]
 
+  @@index([slug])
+  @@index([regionId])
+  @@index([isActive])
+  @@index([country])
   @@map("destinations")
 }
 
@@ -173,6 +179,12 @@ model Tour {
   galleries       Gallery[]
   tripInformation TripInformation[]
 
+  @@index([slug])
+  @@index([regionId])
+  @@index([destinationId])
+  @@index([isActive])
+  @@index([price])
+  @@index([createdAt])
   @@map("tours")
 }
 
@@ -421,6 +433,8 @@ model User {
   // One-to-Many relation: A user can send multiple messages
   messages Message[] // All messages sent by this user
 
+  @@index([email])
+  @@index([role])
   @@map("users")
 }
 
