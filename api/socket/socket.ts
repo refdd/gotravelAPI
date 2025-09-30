@@ -11,7 +11,11 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://pern-chat.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
@@ -19,7 +23,11 @@ app.use(
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "https://pern-chat.vercel.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000",
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   },
